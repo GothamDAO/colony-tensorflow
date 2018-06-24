@@ -3,7 +3,7 @@
 ## Uses ColonyJS, TensorFlow.js and Ethereum Dapp combination
 
 You can earn ERC223 token by doing good Karma (e.g.: smiling for someone or helping with someone's work)
-For the smile and earn good karma e.g.: we're using tensorFlow JS.
+* For the smile and earn good karma e.g.: we're using tensorFlow JS.
 
 ## Features
 
