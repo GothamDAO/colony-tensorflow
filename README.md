@@ -16,7 +16,7 @@ You can earn ERC223 token by doing good Karma (e.g.: smiling for someone or help
 
 ## Installation
 * Set up a local environment for colonyJS: https://docs.colony.io/colonyjs/docs-get-started/
-* `git clone https://github.com/haohaowasky/react-tensorFlow-framework.git`
+* `git clone -b colonyHackathon https://github.com/GothamDAO/colony-tensorflow`
 * `npm install`
 * `npm start`
 * visit http://localhost:8080/
