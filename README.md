@@ -21,6 +21,7 @@ You can earn ERC223 token by doing good Karma (e.g.: smiling for someone or help
 * `npm start`
 * visit http://localhost:8080/
 
-## Open-KarmaToken
+## Open-KarmaToken on Colony Network Demo
+[![Watch the video](https://github.com/GothamDAO/colony-tensorflow/blob/colonyHackathon/Colony-Final-Demo.mov)]
 
 
