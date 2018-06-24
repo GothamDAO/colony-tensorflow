@@ -1,6 +1,9 @@
-# tensorFlow.js and Ethereum Dapp combination
+# ColonyJS hackathon - OKarma 
 
-You can earn ERC223 token by smiling beautifully to the camera， tensorFlow is watching you.
+## Uses ColonyJS, TensorFlow.js and Ethereum Dapp combination
+
+You can earn ERC223 token by doing good Karma (e.g.: smiling for someone or helping with someone's work)
+For the smile and earn good karma e.g.: we're using tensorFlow JS.
 
 ## Features
 
@@ -18,6 +21,6 @@ You can earn ERC223 token by smiling beautifully to the camera， tensorFlow is 
 * `npm start`
 * visit http://localhost:8080/
 
-## Smilecoin
+## Open-KarmaToken
 
-* https://rinkeby.etherscan.io/token/0x606b84d1152a24ca1b08360fcf5011c0a79f7506
+
