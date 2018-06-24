@@ -4,16 +4,28 @@ import * as tf from '@tensorflow/tfjs';
 //react
 import React, { Component } from 'react';
 var ReactDOM = require('react-dom');
+import { Router, Route, browserHistory, Link} from 'react-router';
+
+// colony
+// Import the prerequisites
+const { providers, Wallet } = require('ethers');
+const { default: EthersAdapter } = require('@colony/colony-js-adapter-ethers');
+const { TrufflepigLoader } = require('@colony/colony-js-contract-loader-http');
+const loader = new TrufflepigLoader();
+const provider = new providers.JsonRpcProvider('http://localhost:8545/');
+// Import the ColonyNetworkClient
+const { default: ColonyNetworkClient } = require('@colony/colony-js-client');
 
 // other tf files
 import {ControllerDataset} from './data_set';
 import {Webcam} from './webcam';
-
+//import {Colony} from './colony'
 //ui
-import { Layout , Divider, Button} from 'antd';
+import { Layout , Divider, Button, Menu} from 'antd';
 const { Header, Footer, Sider, Content } = Layout;
 import 'antd/dist/antd.min.css';
 require('./style.css');
+
 
 // Ethereum
 const contractAddress = '0x9c4795922ac0e56d5013a777046108a4d751b382';
@@ -62,7 +74,7 @@ async function loadMobilenet() {
 
 
 async function issueToken(){
-  var getData = myContractInstance.sendToken.getData(web3.eth.accounts[0], 200);
+  var getData = myContractInstance.sendToken.getData(web3.eth.accounts[0], 2);
   await web3.eth.sendTransaction({from:web3.eth.accounts[0], to:contractAddress, data:getData},(err,res) =>{
     console.log("tokenIssued");
   });
@@ -139,7 +151,31 @@ async function train(dense_unit) {
 let isPredicting = false;
 
 async function predict() {
-  console.log("predicting")
+  console.log(isPredicting)
+  // model = tf.sequential({
+  //   layers: [
+  //     // Flattens the input to a vector so we can use it in a dense layer. While
+  //     // technically a layer, this only performs a reshape (and has no training
+  //     // parameters).
+  //     tf.layers.flatten({inputShape: [7, 7, 256]}),
+  //     // Layer 1
+  //     tf.layers.dense({
+  //       units: 10,
+  //       activation: 'relu',
+  //       kernelInitializer: 'varianceScaling',
+  //       useBias: true
+  //     }),
+  //     // Layer 2. The number of units of the last layer should correspond
+  //     // to the number of classes we want to predict.
+  //     tf.layers.dense({
+  //       units: NUM_CLASSES,
+  //       kernelInitializer: 'varianceScaling',
+  //       useBias: false,
+  //       activation: 'softmax'
+  //     })
+  //   ]
+  // });
+
   while (isPredicting) {
     const predictedClass = tf.tidy(() => {
       // Capture the frame from the webcam.
@@ -149,10 +185,12 @@ async function predict() {
       const activation = mobilenet.predict(img);
       // Make a prediction through our newly-trained model using the activation
       // from mobilenet as input.
+
       const predictions = model.predict(activation);
       // Returns the index with the maximum probability. This number corresponds
       // to the class the model thinks is the most probable given the input.
       return predictions.as1D().argMax();
+
     });
     const classId = (await predictedClass.data())[0];
     console.log(result[classId]);
@@ -184,6 +222,59 @@ const onPredict = () => {
 };
 
 
+
+
+  // The following methods use Promises
+const example = async () => {
+
+    // Get the private key from the first account from the ganache-accounts
+    // through trufflepig
+    const  {privateKey}  = await loader.getAccount(0);
+    await console.log('got account');
+    // Create a wallet with the private key (so we have a balance we can use)
+    const wallet = new Wallet(privateKey, provider);
+
+    // Create an adapter (powered by ethers)
+    const adapter = new EthersAdapter({
+      loader,
+      provider,
+      wallet,
+    });
+
+    // Connect to ColonyNetwork with the adapter!
+    const networkClient = new ColonyNetworkClient({ adapter });
+    await networkClient.init();
+
+    // Let's deploy a new ERC20 token for our Colony.
+    // You could also skip this step and use a pre-existing/deployed contract.
+    const tokenAddress = await networkClient.createToken({
+      name: 'Cool Colony Token',
+      symbol: 'COLNY',
+    });
+    console.log('Token address: ' + tokenAddress);
+
+    // Create a cool Colony!
+    const {
+      eventData: { colonyId, colonyAddress },
+    } = await networkClient.createColony.send({ tokenAddress });
+
+    // Congrats, you've created a Colony!
+    console.log('Colony ID: ' + colonyId);
+    console.log('Colony address: ' + colonyAddress);
+
+    // For a colony that exists already, you just need its ID:
+    const colonyClient = await networkClient.getColonyClient(colonyId);
+
+    // Or alternatively, just its address:
+    // const colonyClient = await networkClient.getColonyClientByAddress(colonyAddress);
+
+    // You can also get the Meta Colony:
+    const metaColonyClient = await networkClient.getMetaColonyClient();
+    console.log('Meta Colony address: ' + metaColonyClient.contract.address);
+};
+
+
+
 async function init() {
   try {
     await webcam.setup();
@@ -209,6 +300,17 @@ window.addEventListener('load', function() {
       });
 
 
+class App extends Component{
+  render() {
+    return(
+      <Router history={browserHistory}>
+        <Route path={"/"} component={MLapp}></Route>
+      </Router>
+    );
+  }
+};
+
+
 class MLapp extends Component {
 
   constructor(props) {
@@ -220,7 +322,9 @@ class MLapp extends Component {
     others:0,
     smilecoin:0
   }
-
+  this.showColony = this.showColony.bind(this);
+  this.loadModel = this.loadModel.bind(this);
+  this.saveModel = this.saveModel.bind(this);
   this.startPredict = this.startPredict.bind(this);
   this.startTrain = this.startTrain.bind(this);
   this.incrementSmile = this.incrementSmile.bind(this);
@@ -241,7 +345,6 @@ class MLapp extends Component {
 
   incrementSmile() {
     ExampleHandler(0);
-    //this.setState( {account:web3.eth.accounts[0]});
     this.setState({ smileLabel: this.state.smileLabel + 1 });
   }
 
@@ -255,8 +358,27 @@ class MLapp extends Component {
     await myContractInstance.getBalance(web3.eth.accounts[0],function(err,result){
       this.setState( {smilecoin:result.c[0]});
     }.bind(this));
+    //await example();
     this.setState( {account:web3.eth.accounts[0]});
   }
+
+  async saveModel(){
+    const saveResult = await model.save('downloads://smileModel');
+    alert("model saved!");
+
+  }
+
+  async loadModel(){
+     const model = await tf.loadModel('downloads://smileModel');
+    alert("loaded!");
+
+  }
+  
+  async showColony(){
+    await example();
+  }
+  
+  
 
   componentDidMount() {
      this.setState( {account:web3.eth.accounts[0]});
@@ -268,20 +390,23 @@ class MLapp extends Component {
   render() {
     return (
       <Layout>
-        <Header>Smile Coin</Header>
-          <Divider>Smile Coin</Divider>
+        <Header>Karma Tokens</Header>
+          <Divider>Karma Token on ColonyNetwork</Divider>
           <p>learning rate: 0.0001 Batch size: 0.4 Epochs: 20 Hidden units: 100</p>
           <Content>
           <p>the account number is: {this.state.account}</p>
-          <p>You have : {this.state.smilecoin} smile coins now</p>
+          <p>You have : {this.state.smilecoin} Karma Tokens now</p>
           <Button onClick={this.startTrain}>Train</Button>
           <Button type="primary" onClick={this.startPredict}>Go</Button>
           <Divider>Add Samples </Divider>
-          <Button  onClick={this.incrementSmile}>simileSample:{this.state.smileLabel}</Button>
+          <Button  onClick={this.incrementSmile}>KarmaSample:{this.state.smileLabel}</Button>
           <Button  onClick={this.incrementOther}>otherSample:{this.state.others}</Button>
           <br/>
           <br/>
           <Button type="primary" onClick={this.showAccount}>Show Account</Button>
+          <Button type="primary" onClick={this.saveModel}>Save Model</Button>
+          <Button type="primary" onClick={this.loadModel}>Load Model</Button>
+          <Button type="primary" onClick={this.showColony}>Colony Account</Button>
           </Content>
       </Layout>
     );
@@ -289,4 +414,4 @@ class MLapp extends Component {
 }
 init();
 
-export default MLapp;
+export default App;
