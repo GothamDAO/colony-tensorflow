@@ -7,15 +7,15 @@ You can earn ERC223 token by doing good Karma (e.g.: smiling for someone or help
 
 ## Features
 
-* First you need to give input for tensorflow to learn by clicking simileSample and otherSample.
+* First you need to give input for tensorflow to learn by clicking smileSample and otherSample.
 * smile when you click smileSample, don't smile when you click otherSample
 * and then click train, click multiple times, so the lose can be minimum.
 * then you can click Go button, it will start to detecter wheather you are smiling or not.
-* once the system sees you have smiled for a while, you will be allowed to get Smilecoin
-* be ready for your metamask opened.
+* once the system sees you have smiled for a while, you will be allowed to earn Karma tokens.
+* be ready with your metamask for signing the Tx.
 
 ## Installation
-
+* Set up a local environment for colonyJS: https://docs.colony.io/colonyjs/docs-get-started/
 * `git clone https://github.com/haohaowasky/react-tensorFlow-framework.git`
 * `npm install`
 * `npm start`
